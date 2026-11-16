@@ -50,7 +50,7 @@ struct GroupMemberSection: View {
     }
 
     private func chip(_ account: UsageAccount, order: [UUID]) -> some View {
-        MemberChip(provider: account.provider, badge: store.displayConfiguration.display(account).badge,
+        MemberChip(provider: account.provider, name: store.accountLabel(for: account),
                    title: account.provider.accountChoiceTitle(store.accountLabel(for: account))) {
             store.removeGroupMember(account.id, from: group.id)
         }
@@ -112,7 +112,7 @@ struct GroupMemberSection: View {
                 .frame(width: drag.placeholder.width, height: drag.placeholder.height)
                 .offset(x: drag.placeholder.minX, y: drag.placeholder.minY)
                 .animation(.snappy(duration: 0.18), value: drag.target)
-            MemberChipLabel(provider: account.provider, badge: store.displayConfiguration.display(account).badge)
+            MemberChipLabel(provider: account.provider, name: store.accountLabel(for: account))
                 .frame(width: drag.floatingFrame.width, height: drag.floatingFrame.height)
                 .modifier(FloatingDragCard(settling: settling, cornerRadius: MemberChip.cornerRadius))
                 .offset(x: drag.floatingFrame.minX, y: drag.floatingFrame.minY)
@@ -146,14 +146,15 @@ struct GroupMemberSection: View {
     }
 }
 
-/// A member as its chip and the dragged copy draw it: the provider's tile and the menu bar badge.
+/// A member as its chip and the dragged copy draw it: the provider's tile and the account's name,
+/// as Settings › Accounts shows it.
 struct MemberChipLabel: View {
     let provider: ProviderKind
-    let badge: String
+    let name: String
     var body: some View {
         HStack(spacing: 5) {
             ProviderMark(provider: provider, size: 16)
-            Text(verbatim: badge).font(.callout.weight(.semibold)).lineLimit(1)
+            Text(verbatim: name).font(.callout.weight(.semibold)).lineLimit(1)
         }
     }
 }
@@ -166,15 +167,15 @@ struct MemberChip: View {
     private static let removeSize: CGFloat = 12
     private static let removeGap: CGFloat = 3
     let provider: ProviderKind
-    let badge: String
-    /// The account's name, as the usage line menus show it.
+    let name: String
+    /// The account's name with its service, as the usage line menus show it.
     let title: String
     let remove: () -> Void
     @State private var hovering = false
 
     var body: some View {
         HStack(spacing: Self.removeGap) {
-            MemberChipLabel(provider: provider, badge: badge)
+            MemberChipLabel(provider: provider, name: name)
             Button(action: remove) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: Self.removeSize))
@@ -186,7 +187,7 @@ struct MemberChip: View {
             .opacity(hovering ? 1 : 0)
             .allowsHitTesting(hovering)
         }
-        // At rest the badge sits in the middle, where the hidden button's room would leave it off center.
+        // At rest the name sits in the middle, where the hidden button's room would leave it off center.
         .offset(x: hovering ? 0 : (Self.removeSize + Self.removeGap) / 2)
         .padding(.horizontal, 6)
         .frame(height: Self.height)
@@ -202,7 +203,7 @@ struct MemberChip: View {
         .accessibilityAction(named: Text(removeTitle), remove)
     }
 
-    private var removeTitle: String { String(localized: "Remove \(badge) from this group") }
+    private var removeTitle: String { String(localized: "Remove \(name) from this group") }
 }
 
 /// Chips left to right at their own sizes, starting a new row before one that would pass the width

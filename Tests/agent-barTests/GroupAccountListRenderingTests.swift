@@ -48,6 +48,18 @@ struct GroupAccountListRenderingTests {
         }
     }
 
+    // A row names its account as Settings › Accounts does, so the name can be long: it is cut short to the panel's
+    // width instead of pushing the row wider.
+    @Test func aLongAccountNameIsCutShortToThePanelWidth() {
+        let name = "The Claude account the design team shares for the spring launch"
+        for address in ["design@example.com", ""] {
+            let row = GroupAccountRow(provider: .claude, name: name, address: address,
+                                      snapshot: Self.usage(.claude, 42, 21, plan: "Max"), claudeCode: ClaudeCodePanel(control: .inClaudeCode, lines: []))
+            let size = NSHostingController(rootView: row).sizeThatFits(in: CGSize(width: GroupAccountListView.width, height: 400))
+            #expect(size.width <= GroupAccountListView.width, "address: \(address)")
+        }
+    }
+
     @Test func twelveAccountsListInTheGroupsOrderAndScrollWhenTheScreenIsShort() async throws {
         let output = ProcessInfo.processInfo.environment["AGENTBAR_QA_ARTIFACT_DIR"].map { URL(fileURLWithPath: $0) }
         if let output { try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true) }
@@ -420,9 +432,9 @@ struct GroupAccountListRenderingTests {
         let switching = String(localized: "Claude Code is being switched. Wait for it to finish.")
         let reconnect = String(localized: "Reconnect this account before using it in Claude Code.")
         let useHelp = "Use this account in Claude Code. Open sessions switch within 30 s."
-        func row(_ badge: String, _ address: String, _ snapshot: ProviderSnapshot, _ control: ClaudeCodePanel.Control = .hidden,
+        func row(_ name: String, _ address: String, _ snapshot: ProviderSnapshot, _ control: ClaudeCodePanel.Control = .hidden,
                  _ lines: [ClaudeCodePanel.Line] = [], pointer: Bool = false, refreshing: Bool = false) -> GroupAccountRow {
-            GroupAccountRow(provider: snapshot.provider, badge: badge, address: address, snapshot: snapshot, refreshing: refreshing,
+            GroupAccountRow(provider: snapshot.provider, name: name, address: address, snapshot: snapshot, refreshing: refreshing,
                             claudeCode: ClaudeCodePanel(control: control, lines: lines), highlighted: pointer)
         }
         return [
